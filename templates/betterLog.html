@@ -6,21 +6,16 @@
 <nav>
     <ul>
         <li><a href="/">Home</a></li>
-        <li><a href="/jobsearch">Job Search</a></li>
-        <li><a href="/companies">Companies</a></li>
-        <li><a href="/comments_page">Comments page</a></li>
-        <li><a href="/tease_neta">Secret</a></li>
+        <li><a href="{{ url_for('login', next=previous_page) }}">Log In</a></li>
     </ul>
 </nav>
 
 
     <section class="tease-page">
-        <h2>Hey Neta!</h2>
-        <p>Looks like you have some coding to catch up on...</p>
-      <p>{{ users | map(attribute='user_name') | join(', ') }}</p>
-        <img src="https://media.giphy.com/media/3o7TKzcmwoGTq2vH4I/giphy.gif" alt="Funny coding GIF">
-        <p class="footer-note">P.S. Ask Chat if he can block this page for you!</p>
-    </section>
+        <h2>Pushtak!</h2>
+        <p>you better log in if you want to see what's in here</p>
+        <iframe src="https://giphy.com/embed/15aGGXfSlat2dP6ohs" width="480" height="274" class="giphy-embed" ></iframe>
 
+    </section>
 
 {% endblock %}

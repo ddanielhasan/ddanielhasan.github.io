@@ -1,10 +1,29 @@
 from flask import Flask, render_template, redirect, request, url_for
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import UserMixin
+from flask_login import UserMixin, LoginManager, login_user,logout_user, current_user, login_required
 from flask_migrate import Migrate
-
+from flask_bcrypt import Bcrypt
 
 app = Flask(__name__, template_folder='templates')
+
+#neta, user management
+app.secret_key = "super secret key"
+login_manager = LoginManager()
+login_manager.init_app(app)
+
+@login_manager.user_loader
+def user_loader(uid):
+    return Users.query.get(uid)
+@login_manager.unauthorized_handler
+def unauthorized_call():
+    if current_user.is_authenticated:
+        return redirect('/tease_neta')
+    return redirect('/betterLog')
+
+
+bcrypt = Bcrypt(app)
+##################################
+
 
 
 #daniel local connection:
@@ -141,11 +160,64 @@ def comments_page():
     return redirect(url_for('comments_page'))
 
 @app.route('/tease_neta')
+@login_required
 def tease_neta():
-    users = Users.query.all()
-    for user in users:
-        print(user.user_name)
-    return render_template('tease_neta.html',users=users)
+    return render_template('tease_neta.html', current_user=current_user)
+
+
+@app.route('/sign_up_page', methods=['GET','POST'])
+def sign_up_page():
+    if request.method == "GET":
+        return render_template('sign-up.html')
+    elif request.method == "POST":
+        user_name = request.form.get('username')
+        passwd = request.form.get('password')
+        email = request.form.get('email')
+
+        #hash password
+        hashed_passwd = bcrypt.generate_password_hash(passwd)
+
+        #add to db
+        user = Users(user_name=user_name, password=hashed_passwd, email=email)
+
+        db.session.add(user)
+        db.session.commit()
+
+        return redirect('/test',current_user=current_user.user_name)
+
+@app.route('/login', methods=['GET','POST'])
+def login():
+    if request.method == "GET":
+        return render_template('login.html')
+    elif request.method == "POST":
+        user_name = request.form.get('username')
+        passwd = request.form.get('password')
+
+        #query for user
+        user = Users.query.filter(Users.user_name == user_name).first()
+
+        #check password
+        if bcrypt.check_password_hash(user.password, passwd):
+            login_user(user)
+
+            # Get the 'next' parameter from the URL (where the user was trying to go)
+            next_page = request.args.get('next')
+
+            # Redirect the user to the next page or to the default page ('/test')
+            return redirect(next_page or '/')
+        else:
+            return redirect('/betterLog')
+
+@app.route('/logout')
+def logout():
+    logout_user()
+    return redirect('/')
+
+##DELETE THIS ROUTE!!
+@app.route('/betterLog')
+def betterLog():
+    return render_template('betterLog.html',previous_page=request.referrer)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
