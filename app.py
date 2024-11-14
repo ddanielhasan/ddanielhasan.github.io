@@ -1,5 +1,8 @@
 from flask import Flask, render_template, redirect, request, url_for
 from flask_sqlalchemy import SQLAlchemy
+from flask_login import UserMixin
+from flask_migrate import Migrate
+
 
 app = Flask(__name__, template_folder='templates')
 
@@ -11,16 +14,16 @@ SQLALCHEMY_DATABASE_URI = "mysql+mysqlconnector://{username}:{password}@localhos
     port="3306",
     databasename="jobboard2",
 )
-'''
-#Jun local connection:
-
-SQLALCHEMY_DATABASE_URI = "mysql+mysqlconnector://{username}:{password}@localhost:{port}/{databasename}".format(
-    username="root",
-    password="Tlsguswns97!",
-    port="3306",
-    databasename="jobboard",
-)
-'''
+# '''
+# #Jun local connection:
+#
+# SQLALCHEMY_DATABASE_URI = "mysql+mysqlconnector://{username}:{password}@localhost:{port}/{databasename}".format(
+#     username="root",
+#     password="Tlsguswns97!",
+#     port="3306",
+#     databasename="jobboard",
+# )
+# '''
 # #prodaction connection:
 # SQLALCHEMY_DATABASE_URI = "mysql+mysqlconnector://{username}:{password}@{hostname}/{databasename}".format(
 #     username="ddanielhasan",
@@ -36,6 +39,7 @@ app.config["SQLALCHEMY_POOL_RECYCLE"] = 299
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 
+migrate = Migrate(app, db)
 class Comment(db.Model):
     __tablename__ = "comments"
     id = db.Column(db.Integer, primary_key=True)
@@ -75,6 +79,17 @@ class Industry(db.Model):
     __tablename__ = 'industries'
     industry_id = db.Column(db.Integer, primary_key=True)
     industry_name = db.Column(db.String(100), nullable=False)
+
+class Users(db.Model, UserMixin):
+    __tablename__ = 'users'
+    uid = db.Column(db.Integer, primary_key=True)
+    user_name = db.Column(db.String(80), nullable=False, unique=True)
+    password = db.Column(db.String(80), nullable=False)
+    email = db.Column(db.String(80), nullable=False)
+
+    def get_id(self):
+        return self.uid
+
 
 company_locations = db.Table('company_locations',
     db.Column('company_id', db.Integer, db.ForeignKey('companies.company_id'), primary_key=True),
@@ -127,7 +142,10 @@ def comments_page():
 
 @app.route('/tease_neta')
 def tease_neta():
-    return render_template('tease_neta.html')
+    users = Users.query.all()
+    for user in users:
+        print(user.user_name)
+    return render_template('tease_neta.html',users=users)
 
 if __name__ == '__main__':
     app.run(debug=True)
