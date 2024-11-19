@@ -1,15 +1,26 @@
 {% extends "base.html" %}
 {% block title %} Sign Up {% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='registration.css') }}">
+{% endblock %}
+
 {% block content %}
 
-<form action=" {{ url_for('sign_up_page')}}" method="POST">
+<section class="auth_form">
 
-    <input type="text" name="username" placeholder="User Name" required="required">
-    <input type=password name="password" placeholder="Password" required="required">
-    <input type=email name="email" placeholder="email">
-    <input type=submit value="Sign Up">
+    <form action=" {{ url_for('sign_up_page')}}" method="POST">
 
-</form>
+        <input type="text" name="username" placeholder="User Name" required="required">
+         <div class="password-container">
+            <input type="password" id="password" name="password" placeholder="Password" required="required">
+            <i class="fa fa-eye toggle-password" aria-hidden="true"></i>
+        </div>
+        <input type=email name="email" placeholder="email">
+        <input type=submit value="Sign Up">
+
+    </form>
+</section>
+<script src="{{ url_for('static', filename='js/login.js') }}"></script>
 
 {% endblock %}
