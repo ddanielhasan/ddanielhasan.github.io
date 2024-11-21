@@ -58,6 +58,7 @@
     font-weight: 500;
     cursor: pointer;
     transition: background 0.3s;
+    margin-bottom: 10px;
 }
 
 .auth_form input[type="submit"]:hover {

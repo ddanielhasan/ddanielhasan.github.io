@@ -13,6 +13,11 @@
         <li><a href="#cta">Get Started</a></li>
         <li><a href="#contact">Contact</a></li>
         <li><a href="/tease_neta">Secret</a></li>
+        {% if not current_user.is_authenticated %}
+        <li><a href="/login">Log in</a></li>
+        {% else %}
+        <li><a href="/logout">Log Out</a></li>
+        {% endif %}
     </ul>
 </nav>
 
