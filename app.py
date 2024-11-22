@@ -112,25 +112,46 @@ def tease_neta():
     return render_template('tease_neta.html', current_user=current_user)
 
 
-@app.route('/sign_up_page', methods=['GET','POST'])
+from flask import flash  # Import flash for user feedback
+
+
+@app.route('/sign_up_page', methods=['GET', 'POST'])
 def sign_up_page():
     if request.method == "GET":
         return render_template('sign-up.html')
+
     elif request.method == "POST":
+        # Get form data
         user_name = request.form.get('username')
         passwd = request.form.get('password')
+        passwd_validation = request.form.get('password_validation')  # Confirm password field
         email = request.form.get('email')
 
-        #hash password
-        hashed_passwd = bcrypt.generate_password_hash(passwd)
+        # Check if username already exists
+        existing_user = Users.query.filter_by(user_name=user_name).first()
+        if existing_user:
+            flash("Username already exists. Please choose another one.", "error")
+            return render_template('sign-up.html')
 
-        #add to db
+        # Check if passwords match
+        if passwd != passwd_validation:
+            flash("Passwords do not match. Please try again.", "error")
+            return render_template('sign-up.html')
+
+        # Hash password and add user to database
+        hashed_passwd = bcrypt.generate_password_hash(passwd).decode('utf-8')
         user = Users(user_name=user_name, password=hashed_passwd, email=email)
 
-        db.session.add(user)
-        db.session.commit()
+        try:
+            db.session.add(user)
+            db.session.commit()
+            flash("Account created successfully. Please log in.", "success")
+            return redirect('/')
+        except Exception as e:
+            flash("An error occurred while creating your account. Please try again.", "error")
+            db.session.rollback()
+            return render_template('sign-up.html')
 
-        return redirect('/',current_user=current_user.user_name)
 
 @app.route('/login', methods=['GET','POST'])
 def login():
@@ -143,17 +164,25 @@ def login():
         #query for user
         user = Users.query.filter(Users.user_name == user_name).first()
 
+        if not user:
+            flash('User name not found', 'error')
+            return render_template('/login.html')
+
+
         #check password
         if bcrypt.check_password_hash(user.password, passwd):
             login_user(user)
 
             # Get the 'next' parameter from the URL (where the user was trying to go)
             next_page = request.args.get('next')
+            if not next_page or next_page.startswith('/login'):
+                next_page = '/'  # Default to homepage if 'next' is invalid
 
-            # Redirect the user to the next page or to the default page ('/test')
-            return redirect('/')
+            flash(f"Welcome, {user.user_name}!", "success")
+            return redirect(next_page)
         else:
-            return redirect('/betterLog')
+            flash('Incorrect password', 'error')
+            return redirect('/login')
 
 @app.route('/logout')
 def logout():
