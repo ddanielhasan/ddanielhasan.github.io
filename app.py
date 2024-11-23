@@ -2,6 +2,8 @@ from flask import Flask, render_template, redirect, request, url_for
 from flask_login import LoginManager, login_user,logout_user, current_user, login_required
 from extensions import db, migrate, bcrypt
 from models import Company, Job, Comment, Location, Users, Industry
+from urllib.parse import urlparse
+
 
 
 app = Flask(__name__, template_folder='templates')
@@ -16,9 +18,8 @@ def user_loader(uid):
     return Users.query.get(uid)
 @login_manager.unauthorized_handler
 def unauthorized_call():
-    if current_user.is_authenticated:
-        return redirect('/tease_neta')
-    return redirect('/betterLog')
+    next_page = request.url  # Capture the original URL
+    return redirect(url_for('betterLog', next=next_page))
 
 
 
@@ -153,36 +154,43 @@ def sign_up_page():
             return render_template('sign-up.html')
 
 
-@app.route('/login', methods=['GET','POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == "GET":
-        return render_template('login.html')
+        # Render the login page and pass along the 'next' parameter for GET requests
+        next_page = request.args.get('next', '/')
+        return render_template('login.html', previous_page=next_page)
+
     elif request.method == "POST":
         user_name = request.form.get('username')
         passwd = request.form.get('password')
 
-        #query for user
+        # Query for user
         user = Users.query.filter(Users.user_name == user_name).first()
 
         if not user:
             flash('User name not found', 'error')
-            return render_template('/login.html')
+            return redirect(url_for('login', next=request.form.get('next', '/')))
 
-
-        #check password
+        # Check password
         if bcrypt.check_password_hash(user.password, passwd):
             login_user(user)
 
-            # Get the 'next' parameter from the URL (where the user was trying to go)
-            next_page = request.args.get('next')
-            if not next_page or next_page.startswith('/login'):
-                next_page = '/'  # Default to homepage if 'next' is invalid
+            # Get the 'next' parameter from the form data or default to home
+            next_page = request.form.get('next', '/')
+
+            # Ensure 'next_page' is either a safe relative URL or an internal absolute path
+            if next_page.startswith('http'):
+                next_page = urlparse(next_page).path  # Parse and extract the path
+            if not next_page.startswith('/'):
+                next_page = '/'  # Default to home for invalid paths
 
             flash(f"Welcome, {user.user_name}!", "success")
             return redirect(next_page)
-        else:
-            flash('Incorrect password', 'error')
-            return redirect('/login')
+
+        flash('Incorrect password', 'error')
+        return redirect(url_for('login', next=request.form.get('next', '/')))
+
 
 @app.route('/logout')
 def logout():
@@ -192,8 +200,9 @@ def logout():
 ##DELETE THIS ROUTE!!
 @app.route('/betterLog')
 def betterLog():
-    return render_template('betterLog.html',previous_page=request.referrer)
-
+    # Capture the 'next' parameter or default to the home page if not present
+    next_page = request.args.get('next') or url_for('index')  # Default to homepage
+    return render_template('betterLog.html', previous_page=next_page)
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -67,7 +67,7 @@
     <ul>
         <li><a href="/">Home</a></li>
         <li><a href="{{ url_for('login', next=previous_page) }}">Log In</a></li>
-        <li><a href="{{ url_for('sign_up_page') }}">Sign Up</a></li>
+        <li><a href="{{ url_for('sign_up_page', next=previous_page) }}">Sign Up</a></li>
     </ul>
 </nav>
 
