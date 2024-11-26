@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %} Secret Page for Neta {% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Navigation Styles */
+    nav {
+        background-color: #fff;
+        padding: 10px 20px;
+        position: sticky;
+        top: 0;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+    }
+    nav ul {
+        list-style: none;
+        display: flex;
+        justify-content: center;
+        margin: 0;
+        padding: 0;
+    }
+    nav li {
+        margin: 0 15px;
+    }
+    nav a {
+        color: #333;
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 1em;
+    }
+    nav a:hover {
+        color: #667eea;
+    }
+
+    /* Tease Page Styles */
+    .tease-page {
+        text-align: center;
+        padding: 60px 20px;
+        max-width: 800px;
+        margin: auto;
+        background-color: #f9f9f9;
+        border-radius: 8px;
+
+    }
+    .tease-page h2 {
+        font-size: 2em;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 20px;
+    }
+    .tease-page p {
+        font-size: 1.1em;
+        color: #666;
+        margin-bottom: 20px;
+    }
+    .tease-page iframe {
+        border: none;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<nav>
+    <ul>
+        <li><a href="/">Home</a></li>
+        <li><a href="{{ url_for('login', next=previous_page) }}">Log In</a></li>
+        <li><a href="{{ url_for('sign_up_page', next=previous_page) }}">Sign Up</a></li>
+    </ul>
+</nav>
+
+<section class="tease-page">
+    <h2>Pushtak!</h2>
+    <p>you better log in if you want to see what's in here</p>
+    <iframe src="https://giphy.com/embed/15aGGXfSlat2dP6ohs" width="480" height="274" class="giphy-embed"></iframe>
+</section>
+
+{% endblock %}
+

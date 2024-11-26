@@ -1,1 +1,5 @@
 .DS_Store
+Dump20241111.sql
+migrations
+test.html
+__pycache__/

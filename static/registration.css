@@ -1,0 +1,76 @@
+/* Center and Style Login Form */
+.auth_form {
+    max-width: 400px;
+    margin: 60px auto; /* Center the form and add vertical spacing */
+    padding: 30px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.auth_form input[type="text"],
+.auth_form input[type="password"],
+.auth_form input[type="email"] {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1em;
+    font-family: 'Roboto', sans-serif;
+}
+
+/* Password container styling */
+.password-container {
+    position: relative;
+    width: 100%;
+}
+
+.password-container input[type="password"] {
+    padding-right: 40px; /* Space for the eye icon */
+}
+
+/* Eye icon styling */
+.password-container .toggle-password {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 18px;
+    color: #888;
+}
+
+
+.password-container .toggle-password:hover {
+    color: #555;
+}
+
+.auth_form input[type="submit"] {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 1em;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.3s;
+    margin-bottom: 10px;
+}
+
+.auth_form input[type="submit"]:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
+/* Adjust Placeholder Color */
+.auth_form input::placeholder {
+    color: #999;
+    font-size: 0.9em;
+}
+
+
+
+
