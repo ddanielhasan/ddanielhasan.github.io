@@ -16,8 +16,8 @@ class Company(db.Model):
     company_id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
     description = db.Column(db.Text)
-    website = db.Column(db.String(255))
-    logo_url = db.Column(db.String(255))
+    website = db.Column(db.String(4096))
+    logo_url = db.Column(db.String(4096))
     jobs = db.relationship('Job', back_populates='company', lazy=True)
     locations = db.relationship('Location',
                                 secondary='company_locations',

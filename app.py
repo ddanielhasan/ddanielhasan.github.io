@@ -1,9 +1,11 @@
-from flask import Flask, render_template, redirect, request, url_for
+from flask import Flask, render_template, redirect, request, url_for, flash
 from flask_login import LoginManager, login_user,logout_user, current_user, login_required
 from extensions import db, migrate, bcrypt
 from models import Company, Job, Comment, Location, Users, Industry, JobType, JobCategory
 from urllib.parse import urlparse
-
+from utils import load_excel_data_to_db
+import os
+from werkzeug.utils import secure_filename
 
 
 app = Flask(__name__, template_folder='templates')
@@ -250,6 +252,37 @@ def betterLog():
     # Capture the 'next' parameter or default to the home page if not present
     next_page = request.args.get('next') or url_for('index')  # Default to homepage
     return render_template('betterLog.html', previous_page=next_page)
+
+ALLOWED_EXTENSIONS = {'xls', 'xlsx'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+@app.route('/upload', methods=['GET', 'POST'])
+def upload_file():
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            flash('No file part')
+            return redirect(request.url)
+
+        file = request.files['file']
+        if file.filename == '':
+            flash('No selected file')
+            return redirect(request.url)
+
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            file_path = os.path.join('uploads', filename)
+            file.save(file_path)
+
+            try:
+                load_excel_data_to_db(file_path)  # Call the function
+                flash('File successfully uploaded and processed')
+            except Exception as e:
+                flash(f'Error processing file: {e}')
+
+            return redirect(url_for('upload_file'))
+
+    return render_template('upload.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
