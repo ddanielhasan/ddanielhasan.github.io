@@ -21,12 +21,43 @@
             <!-- Keywords -->
             <div class="filter-group">
                 <label for="keywords">Title Keywords</label>
-                <input type="text" id="keywords" name="keywords" placeholder="Job title, skills, company" value="{{ keywords }}">
+                <input type="text" id="keywords" name="keywords" placeholder="Job title, skills, company" value="{{ request.args.get('keywords', '') }}">
             </div>
             <!-- Location -->
             <div class="filter-group">
                 <label for="location">Location</label>
                 <input type="text" id="location" name="location" placeholder="City, state, country" value="{{ location }}">
+            </div>
+            <!-- Job Category -->
+            <div class="filter-group">
+                <label for="job_category">Job Category</label>
+                <select id="job_category" name="job_category">
+                    <option value="">Any</option>
+                    <option value="accounting" {% if job_category == 'accounting' %}selected{% endif %}>Accounting</option>
+                    <option value="administrative" {% if job_category == 'administrative' %}selected{% endif %}>Administrative</option>
+                    <option value="art_creative" {% if job_category == 'art_creative' %}selected{% endif %}>Art/Creative</option>
+                    <option value="business_development" {% if job_category == 'business_development' %}selected{% endif %}>Business Development</option>
+                    <option value="consulting" {% if job_category == 'consulting' %}selected{% endif %}>Consulting</option>
+                    <option value="customer_service" {% if job_category == 'customer_service' %}selected{% endif %}>Customer Service</option>
+                    <option value="data_science" {% if job_category == 'data_science' %}selected{% endif %}>Data Science</option>
+                    <option value="design" {% if job_category == 'design' %}selected{% endif %}>Design</option>
+                    <option value="education_and_training" {% if job_category == 'education_and_training' %}selected{% endif %}>Education and Training</option>
+                    <option value="engineering" {% if job_category == 'engineering' %}selected{% endif %}>Engineering</option>
+                    <option value="human_resources" {% if job_category == 'human_resources' %}selected{% endif %}>Human Resources</option>
+                    <option value="it" {% if job_category == 'it' %}selected{% endif %}>IT</option>
+                    <option value="legal" {% if job_category == 'legal' %}selected{% endif %}>Legal</option>
+                    <option value="marketing" {% if job_category == 'marketing' %}selected{% endif %}>Marketing</option>
+                    <option value="operations" {% if job_category == 'operations' %}selected{% endif %}>Operations</option>
+                    <option value="product" {% if job_category == 'product' %}selected{% endif %}>Product</option>
+                    <option value="project_management" {% if job_category == 'project_management' %}selected{% endif %}>Project Management</option>
+                    <option value="public_relations" {% if job_category == 'public_relations' %}selected{% endif %}>Public Relations</option>
+                    <option value="quality_assurance" {% if job_category == 'quality_assurance' %}selected{% endif %}>Quality Assurance</option>
+                    <option value="sales" {% if job_category == 'sales' %}selected{% endif %}>Sales</option>
+                    <option value="security" {% if job_category == 'security' %}selected{% endif %}>Security</option>
+                    <option value="software_development" {% if job_category == 'software_development' %}selected{% endif %}>Software Development</option>
+                    <option value="supply_chain" {% if job_category == 'supply_chain' %}selected{% endif %}>Supply Chain</option>
+                    <option value="writing_editing" {% if job_category == 'writing_editing' %}selected{% endif %}>Writing/Editing</option>
+                </select>
             </div>
             <!-- Job Type -->
             <div class="filter-group">
@@ -127,9 +158,15 @@
         {% if jobs %}
         {% for job in jobs %}
             <div class="job-item">
-                <h3>{{ job.title }}</h3>
+                <div class="job-header">
+                    <img src="{{ job.company_logo }}" alt="Company Logo" class="company-logo" />
+                    <h3 class="job-title">{{ job.title }}</h3>
+                </div>
                 <p><strong>Company ID:</strong> {{ job.company_id }}</p>
                 <p><strong>Company:</strong> {{ job.company_name }}</p>
+                <p><strong>Location:</strong> {{ job.location_city }}, {{ job.location_state }}, {{ job.location_country }}</p>
+                <p><strong>Job Type:</strong> {{ job.job_type }}</p>
+                <p><strong>Category:</strong> {{ job.job_category }}</p>
                 <p><strong>Job description:</strong> {{ job.description }}</p>
                 <a href="#apply" class="apply-btn">Apply Now</a>
             </div>

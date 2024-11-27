@@ -1,7 +1,7 @@
 from flask import Flask, render_template, redirect, request, url_for
 from flask_login import LoginManager, login_user,logout_user, current_user, login_required
 from extensions import db, migrate, bcrypt
-from models import Company, Job, Comment, Location, Users, Industry
+from models import Company, Job, Comment, Location, Users, Industry, JobType, JobCategory
 from urllib.parse import urlparse
 
 
@@ -21,13 +21,6 @@ def unauthorized_call():
     next_page = request.url  # Capture the original URL
     return redirect(url_for('betterLog', next=next_page))
 
-
-
-##################################
-
-
-
-
 ############### APP DB MANAGEMENT ###############
 #daniel local connection:
 SQLALCHEMY_DATABASE_URI = "mysql+mysqlconnector://{username}:{password}@localhost:{port}/{databasename}".format(
@@ -36,7 +29,7 @@ SQLALCHEMY_DATABASE_URI = "mysql+mysqlconnector://{username}:{password}@localhos
     port="3306",
     databasename="jobboard2",
 )
-# '''
+#
 # #Jun local connection:
 #
 # SQLALCHEMY_DATABASE_URI = "mysql+mysqlconnector://{username}:{password}@localhost:{port}/{databasename}".format(
@@ -45,7 +38,7 @@ SQLALCHEMY_DATABASE_URI = "mysql+mysqlconnector://{username}:{password}@localhos
 #     port="3306",
 #     databasename="jobboard",
 # )
-# '''
+#
 # #prodaction connection:
 # SQLALCHEMY_DATABASE_URI = "mysql+mysqlconnector://{username}:{password}@{hostname}/{databasename}".format(
 #     username="ddanielhasan",
@@ -53,8 +46,7 @@ SQLALCHEMY_DATABASE_URI = "mysql+mysqlconnector://{username}:{password}@localhos
 #     hostname="ddanielhasan.mysql.pythonanywhere-services.com",
 #     databasename="ddanielhasan$comments",
 # )
-'''
-'''
+
 
 app.config["SQLALCHEMY_DATABASE_URI"] = SQLALCHEMY_DATABASE_URI
 app.config["SQLALCHEMY_POOL_RECYCLE"] = 299
@@ -73,14 +65,37 @@ def index():
 @app.route('/jobsearch', methods=['GET'])
 def jobsearch():
     keywords = request.args.get('keywords', '')
+    job_category = request.args.get('job_category', '')
     # Query with filter if keywords are provided
-    jobs_query = Job.query.join(Company).add_columns(Job.job_id, Job.title, Job.description,Job.company_id, Company.name.label('company_name'))
+    jobs_query = (
+        Job.query
+        .join(Company)
+        .join(Location, Job.location_id == Location.location_id)
+        .join(JobType, Job.job_type_id == JobType.job_type_id)
+        .join(JobCategory, Job.category_id == JobCategory.category_id)
+        .add_columns(
+            Job.job_id,
+            Job.title,
+            Job.description,
+            Job.company_id,
+            Company.name.label('company_name'),
+            Company.logo_url.label('company_logo'),
+            Location.city.label('location_city'),
+            Location.state.label('location_state'),
+            Location.country.label('location_country'),
+            JobType.type_name.label('job_type'),
+            JobCategory.category_name.label('job_category')
+        )
+    )
     if keywords:
         jobs_query = jobs_query.filter(Job.title.ilike(f'%{keywords}%'))
+    if job_category:
+        jobs_query = jobs_query.filter(JobCategory.category_name.ilike(job_category))
 
     # Add other filters here as needed, similar to the keywords filter
+    categories = JobCategory.query.all()
     jobs = jobs_query.all()
-    return render_template('jobsearch.html', jobs=jobs)
+    return render_template('jobsearch.html', jobs=jobs, categories=categories, job_category=job_category)
 
 @app.route('/companies')
 def companies():

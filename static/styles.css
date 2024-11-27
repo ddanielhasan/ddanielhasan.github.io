@@ -102,6 +102,22 @@ section {
     padding-top: 40px;
     padding-bottom: 40px;
 }
+.job-header {
+    display: flex;
+    align-items: center; /* Align logo and title vertically */
+    gap: 10px; /* Space between the logo and title */
+}
+.company-logo {
+    width: 50px; /* Set the logo width */
+    height: 50px; /* Set the logo height */
+    object-fit: contain; /* Maintain aspect ratio */
+}
+.job-title {
+    margin: 0; /* Remove default margins */
+    flex-grow: 1; /* Allow the title to take up the remaining space */
+    text-align: left; /* Align the text to the left */
+    font-size: 1.5em; /* Adjust title size if needed */
+}
 .job-item {
     background-color: #f9f9f9;
     padding: 20px 30px;
