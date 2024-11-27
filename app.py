@@ -97,6 +97,38 @@ def jobsearch():
     jobs = jobs_query.all()
     return render_template('jobsearch.html', jobs=jobs, categories=categories, job_category=job_category)
 
+@app.route('/job/<int:job_id>', methods=['GET'])
+def job_details(job_id):
+    # Fetch the job details by ID
+    job = (
+        Job.query
+        .join(Company)
+        .join(Location, Job.location_id == Location.location_id)
+        .join(JobType, Job.job_type_id == JobType.job_type_id)
+        .join(JobCategory, Job.category_id == JobCategory.category_id)
+        .add_columns(
+            Job.job_id,
+            Job.title,
+            Job.description,
+            Job.company_id,
+            Company.name.label('company_name'),
+            Company.logo_url.label('company_logo'),
+            Location.city.label('location_city'),
+            Location.state.label('location_state'),
+            Location.country.label('location_country'),
+            JobType.type_name.label('job_type'),
+            JobCategory.category_name.label('job_category'),
+            Job.salary_min,
+            Job.salary_max,
+            Job.posted_date,
+            Job.closing_date
+        )
+        .filter(Job.job_id == job_id)
+        .first_or_404()
+    )
+
+    return render_template('job_details.html', job=job)
+
 @app.route('/companies')
 def companies():
     companies = Company.query.all()

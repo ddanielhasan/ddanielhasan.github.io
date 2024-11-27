@@ -505,4 +505,22 @@ footer a:hover {
     color: #856404; /* Dark yellow text */
     border: 1px solid #ffeeba;
 }
+.job-details-container {
+    max-width: 800px;
+    margin: 40px auto;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.job-details-container h1 {
+    margin: 0;
+    font-size: 2em;
+    color: #333;
+}
 
+.job-details-container p {
+    margin: 10px 0;
+    font-size: 1.1em;
+    color: #666;
+}

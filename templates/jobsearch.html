@@ -168,7 +168,7 @@
                 <p><strong>Job Type:</strong> {{ job.job_type }}</p>
                 <p><strong>Category:</strong> {{ job.job_category }}</p>
                 <p><strong>Job description:</strong> {{ job.description }}</p>
-                <a href="#apply" class="apply-btn">Apply Now</a>
+                <a href="{{ url_for('job_details', job_id=job.job_id) }}" class="apply-btn">Apply Now</a>
             </div>
         {% endfor %}
     {% else %}
