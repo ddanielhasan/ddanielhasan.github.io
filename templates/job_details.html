@@ -3,6 +3,16 @@
 {% block title %}{{ job.title }} Details{% endblock %}
 
 {% block content %}
+
+<nav>
+    <ul>
+        <li><a href="/">Home</a></li>
+        <li><a href="/jobsearch">Job Search</a></li>
+        <li><a href="/companies">Companies</a></li>
+        <li><a href="#contact">Contact</a></li>
+    </ul>
+</nav>
+
 <div class="job-details-container">
     <div class="job-header">
         <img src="{{ job.company_logo }}" alt="{{ job.company_name }}" class="company-logo-large" />
