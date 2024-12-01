@@ -58,11 +58,6 @@ def load_company_data_to_db(excel_path):
     final_columns = ['name', 'logo_url', 'location', 'company_category', 'description', 'employee_count', 'website']
     clean_data = data[final_columns]
 
-    # Return the processed data
-    #eturn data
-
-
-
     """
     Loads preprocessed company data into the database, using industry_id mappings for Industry table.
     :param excel_path: Path to the preprocessed Excel file
@@ -176,7 +171,108 @@ def load_company_data_to_db(excel_path):
         logging.error(f"Error committing changes: {e}")
         raise
 
-def load_job_data_to_db(excel_path):
+def load_job_data_to_db(file_path):
+    """
+    Preprocess job data from an Excel file and return the cleaned DataFrame.
+
+    :param file_path: Path to the input Excel file containing job data.
+    :return: A pandas DataFrame with the processed job data.
+    """
+
+    # Load the Excel file
+    data = pd.read_excel(file_path)
+
+    # Combine info1, info2, info3, info4 into a single column
+    data['combined_info'] = data[['info1', 'info2', 'info3', 'info4']].fillna('').agg(' '.join, axis=1)
+
+    # Define a function to parse combined_info
+    def parse_info(info):
+        parsed = {
+            'work_type': None,
+            'minimum_salary': 'unknown',
+            'max_salary': 'unknown',
+            'avg_salary': 'unknown',
+            'employee_level': 'unknown'
+        }
+
+        # Work Type
+        if 'Remote' in info:
+            parsed['work_type'] = 'Remote'
+        elif 'Hybrid' in info:
+            parsed['work_type'] = 'Hybrid'
+        else:
+            parsed['work_type'] = 'Onsite'
+
+        # Salary
+        salary_match = re.search(r'(\d+K)-(\d+K)', info)
+        if salary_match:
+            min_salary = int(salary_match.group(1).replace('K', '')) * 1000
+            max_salary = int(salary_match.group(2).replace('K', '')) * 1000
+            avg_salary = (min_salary + max_salary) // 2
+            parsed['minimum_salary'] = min_salary
+            parsed['max_salary'] = max_salary
+            parsed['avg_salary'] = avg_salary
+
+        # Employee Level
+        levels = ['Entry level', 'Junior', 'Mid level', 'Senior level', 'Expert/Leader']
+        for level in levels:
+            if level in info:
+                parsed['employee_level'] = level
+                break
+
+        return parsed
+
+    # Apply the parse_info function to combined_info
+    parsed_info = data['combined_info'].apply(parse_info)
+    data['work_type'] = parsed_info.apply(lambda x: x['work_type'])
+    data['minimum_salary'] = parsed_info.apply(lambda x: x['minimum_salary'])
+    data['max_salary'] = parsed_info.apply(lambda x: x['max_salary'])
+    data['avg_salary'] = parsed_info.apply(lambda x: x['avg_salary'])
+    data['employee_level'] = parsed_info.apply(lambda x: x['employee_level'])
+
+    # Clean the skills column
+    def clean_skills(skills):
+        if isinstance(skills, str):
+            valid_skills = re.findall(
+                r'<div class="py-xs px-sm d-inline-block rounded-3 fs-sm text-nowrap border">(.*?)</div>',
+                skills
+            )
+            return valid_skills if valid_skills else None
+        return None
+
+    data['skills'] = data['skills'].apply(clean_skills)
+    data = data[data['skills'].notnull()]
+
+    # Retain only required columns and clean company_url
+    columns_to_keep = [
+        'job_summary', 'company_url-href', 'job_title',
+        'company_title', 'skills', 'work_type',
+        'minimum_salary', 'max_salary', 'avg_salary', 'employee_level'
+    ]
+    data = data[columns_to_keep]
+
+    data.rename(columns={'company_url-href': 'company_url'}, inplace=True)
+
+    # Clean company_url
+    def clean_company_url(url):
+        if isinstance(url, str) and url.startswith('http'):
+            return url
+        return 'unknown'
+
+    data['company_url'] = data['company_url'].apply(clean_company_url)
+
+    # Remove duplicate rows
+    clean_data = data.drop_duplicates(subset=['job_title', 'company_title', 'company_url'])
+
+    # Reset index after dropping rows
+    clean_data.reset_index(drop=True, inplace=True)
+
+    # Return the processed DataFrame
+    #return data
+
+
+
+    ######################################################
     def get_or_create_job_type(job_type_name):
         """
         Get or create a JobType entry in the database.
@@ -199,11 +295,12 @@ def load_job_data_to_db(excel_path):
         Get the company_id for a given company_title and company_url. Returns None if the company does not exist.
         """
         company = Company.query.filter_by(name=company_title, website=company_url).first()
+        #company = Company.query.filter_by(name=company_title).first()
         return company.company_id if company else None
 
     try:
         # Load job data from Excel
-        job_df = pd.read_excel(excel_path)
+        job_df = clean_data
 
         for _, row in job_df.iterrows():
             try:
@@ -220,6 +317,7 @@ def load_job_data_to_db(excel_path):
 
                 # Get company_id
                 company_id = get_company_id(company_title, company_url)
+                print (company_id)
                 if not company_id:
                     continue  # Skip this job if the company is not in the database
 
