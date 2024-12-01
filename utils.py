@@ -104,7 +104,7 @@ def load_company_data_to_db(excel_path):
             return []
 
     try:
-        # Read Excel file
+        # use the DF from cleaning
         df = clean_data
         df = df.where(pd.notnull(df), None)
         logging.info("Preprocessed Excel file successfully read.")
@@ -305,6 +305,15 @@ def load_job_data_to_db(file_path):
         #company = Company.query.filter_by(name=company_title).first()
         return company.company_id if company else None
 
+    def clean_salary(value):
+        """
+        Clean salary data. If the value is not numeric, return None.
+        """
+        try:
+            return float(value)  # Convert to float
+        except (ValueError, TypeError):
+            return None  # Replace invalid values with None
+
     try:
         # Load job data from Excel
         job_df = clean_data
@@ -317,6 +326,8 @@ def load_job_data_to_db(file_path):
                 company_title = row.get('company_title', None)
                 company_url = row.get('company_url', None)
                 work_type = row.get('work_type', None)
+                minimum_salary = clean_salary(row.get('minimum_salary'))
+                max_salary = clean_salary(row.get('max_salary'))
 
                 # Skip if job_title or job_description is missing
                 if not job_title or not job_description:
@@ -351,6 +362,8 @@ def load_job_data_to_db(file_path):
                     description=job_description,
                     company_id=company_id,
                     job_type_id=job_type.job_type_id if job_type else None,  # Link job_type_id
+                    salary_min=minimum_salary,
+                    salary_max=max_salary
                 )
                 db.session.add(job)
                 db.session.flush()  # Generate job_id
