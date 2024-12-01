@@ -114,6 +114,13 @@ def load_company_data_to_db(excel_path):
 
     for _, row in df.iterrows():
         try:
+            # Validate company name
+            company_name = row['name']
+            print(company_name)
+            if not company_name or company_name == 'nan' or pd.isna(company_name):
+                logging.error(f"Invalid company name for row {row.to_dict()}")
+                continue  # Skip this row
+
             # Truncate website field if too long
             website = row['website']
             if pd.notna(website) and len(website) > 1024:
@@ -349,7 +356,7 @@ def load_job_data_to_db(file_path):
                 db.session.flush()  # Generate job_id
 
                 # Add skills if available
-                if pd.notna(row['skills']):
+                if row['skills']:
                     skills = eval(row['skills']) if isinstance(row['skills'], str) else row['skills']
                     for skill_name in skills:
                         skill = Skill.query.filter_by(skill_name=skill_name).first()
