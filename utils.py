@@ -115,11 +115,11 @@ def load_company_data_to_db(excel_path):
     for _, row in df.iterrows():
         try:
             # Validate company name
-            company_name = row['name']
-            print(company_name)
-            if not company_name or company_name == 'nan' or pd.isna(company_name):
-                logging.error(f"Invalid company name for row {row.to_dict()}")
-                continue  # Skip this row
+            #company_name = row['name']
+            #print(company_name)
+            #if not company_name or company_name == 'nan' or pd.isna(company_name):
+            #    logging.error(f"Invalid company name for row {row.to_dict()}")
+            #    continue  # Skip this row
 
             # Truncate website field if too long
             website = row['website']
