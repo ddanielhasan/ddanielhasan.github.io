@@ -3,7 +3,7 @@ from flask_login import LoginManager, login_user,logout_user, current_user, logi
 from extensions import db, migrate, bcrypt
 from models import Company, Job, Comment, Location, Users, Industry, JobType, JobCategory
 from urllib.parse import urlparse
-from utils import load_excel_data_to_db
+from utils import load_company_data_to_db
 import os
 from werkzeug.utils import secure_filename
 
@@ -275,7 +275,7 @@ def upload_file():
             file.save(file_path)
 
             try:
-                load_excel_data_to_db(file_path)  # Call the function
+                load_company_data_to_db(file_path)  # Call the function
                 flash('File successfully uploaded and processed')
             except Exception as e:
                 flash(f'Error processing file: {e}')
