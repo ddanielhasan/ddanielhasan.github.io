@@ -3,7 +3,7 @@ from flask_login import LoginManager, login_user,logout_user, current_user, logi
 from extensions import db, migrate, bcrypt
 from models import Company, Job, Comment, Location, Users, Industry, JobType, JobCategory
 from urllib.parse import urlparse
-from utils import load_company_data_to_db
+from utils import load_company_data_to_db, load_job_data_to_db
 import os
 from werkzeug.utils import secure_filename
 
@@ -68,13 +68,13 @@ def index():
 def jobsearch():
     keywords = request.args.get('keywords', '')
     job_category = request.args.get('job_category', '')
-    # Query with filter if keywords are provided
+    # Query with outer joins to include jobs without location or category
     jobs_query = (
         Job.query
         .join(Company)
-        .join(Location, Job.location_id == Location.location_id)
-        .join(JobType, Job.job_type_id == JobType.job_type_id)
-        .join(JobCategory, Job.category_id == JobCategory.category_id)
+        .outerjoin(Location, Job.location_id == Location.location_id)
+        .outerjoin(JobType, Job.job_type_id == JobType.job_type_id)
+        .outerjoin(JobCategory, Job.category_id == JobCategory.category_id)
         .add_columns(
             Job.job_id,
             Job.title,
@@ -258,8 +258,9 @@ ALLOWED_EXTENSIONS = {'xls', 'xlsx'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 @app.route('/upload', methods=['GET', 'POST'])
-def upload_file():
+def upload_file(upload_type=None):
     if request.method == 'POST':
+        upload_type = request.form.get('upload_type')
         if 'file' not in request.files:
             flash('No file part')
             return redirect(request.url)
@@ -275,8 +276,15 @@ def upload_file():
             file.save(file_path)
 
             try:
-                load_company_data_to_db(file_path)  # Call the function
-                flash('File successfully uploaded and processed')
+                if upload_type == 'company':
+                    load_company_data_to_db(file_path)
+                    flash('Company data successfully uploaded and processed')
+                elif upload_type == 'job':
+                    load_job_data_to_db(file_path)
+                    flash('Job data successfully uploaded and processed')
+                else:
+                    flash('Invalid upload type')
+                    return redirect(request.url)
             except Exception as e:
                 flash(f'Error processing file: {e}')
 

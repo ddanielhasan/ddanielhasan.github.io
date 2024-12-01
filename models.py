@@ -80,6 +80,11 @@ class Benefit(db.Model):
     benefit_id = db.Column(db.Integer, primary_key=True)
     benefit_name = db.Column(db.String(100))
 
+class JobSkill(db.Model):#new
+    __tablename__ = 'job_skills'
+    job_id = db.Column(db.Integer, db.ForeignKey('jobs.job_id'), primary_key=True)
+    skill_id = db.Column(db.Integer, db.ForeignKey('skills.skill_id'), primary_key=True)
+
 class Users(db.Model, UserMixin):
     __tablename__ = 'users'
     uid = db.Column(db.Integer, primary_key=True)

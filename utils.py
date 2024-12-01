@@ -1,5 +1,5 @@
 import pandas as pd
-from models import db, Company, Location, Industry  # Import models
+from models import db, Company, Location, Industry, Job, JobSkill, Skill , JobCategory, JobType  # Import models
 from sqlalchemy.exc import IntegrityError
 import logging
 import re
@@ -175,3 +175,105 @@ def load_company_data_to_db(excel_path):
         db.session.rollback()
         logging.error(f"Error committing changes: {e}")
         raise
+
+def load_job_data_to_db(excel_path):
+    def get_or_create_job_type(job_type_name):
+        """
+        Get or create a JobType entry in the database.
+        """
+        job_type = JobType.query.filter_by(type_name=job_type_name).first()
+        if job_type:
+            return job_type
+        else:
+            new_job_type = JobType(type_name=job_type_name)
+            db.session.add(new_job_type)
+            try:
+                db.session.commit()
+                return new_job_type
+            except IntegrityError:
+                db.session.rollback()
+                return JobType.query.filter_by(type_name=job_type_name).first()
+
+    def get_company_id(company_title, company_url):
+        """
+        Get the company_id for a given company_title and company_url. Returns None if the company does not exist.
+        """
+        company = Company.query.filter_by(name=company_title, website=company_url).first()
+        return company.company_id if company else None
+
+    try:
+        # Load job data from Excel
+        job_df = pd.read_excel(excel_path)
+
+        for _, row in job_df.iterrows():
+            try:
+                # Extract required fields
+                job_title = row.get('job_title', None)
+                job_description = row.get('job_summary', None)
+                company_title = row.get('company_title', None)
+                company_url = row.get('company_url', None)
+                work_type = row.get('work_type', None)
+
+                # Skip if job_title or job_description is missing
+                if not job_title or not job_description:
+                    continue
+
+                # Get company_id
+                company_id = get_company_id(company_title, company_url)
+                if not company_id:
+                    continue  # Skip this job if the company is not in the database
+
+                # Check for duplicate job
+                duplicate_job = (
+                    Job.query.join(Company, Job.company_id == Company.company_id)
+                    .filter(
+                        Job.title == job_title,
+                        Company.website == company_url
+                    )
+                    .first()
+                )
+                if duplicate_job:
+                    continue  # Skip this job if it already exists
+
+                # Map work_type to job_type
+                job_type = None
+                if work_type:
+                    job_type = get_or_create_job_type(work_type)
+
+                # Add the job
+                job = Job(
+                    title=job_title,
+                    description=job_description,
+                    company_id=company_id,
+                    job_type_id=job_type.job_type_id if job_type else None,  # Link job_type_id
+                )
+                db.session.add(job)
+                db.session.flush()  # Generate job_id
+
+                # Add skills if available
+                if pd.notna(row['skills']):
+                    skills = eval(row['skills']) if isinstance(row['skills'], str) else row['skills']
+                    for skill_name in skills:
+                        skill = Skill.query.filter_by(skill_name=skill_name).first()
+                        if not skill:
+                            skill = Skill(skill_name=skill_name)
+                            db.session.add(skill)
+                            db.session.flush()
+
+                        # Link job and skill
+                        job_skill = JobSkill(job_id=job.job_id, skill_id=skill.skill_id)
+                        db.session.add(job_skill)
+
+                logging.info(f"Job added: {job_title}")
+
+            except Exception as inner_e:
+                logging.error(f"Error processing row {row.to_dict()}: {inner_e}")
+                continue  # Skip problematic rows
+
+        # Commit all changes
+        db.session.commit()
+        logging.info("Job data successfully loaded into the database.")
+
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Error loading job data: {e}")
