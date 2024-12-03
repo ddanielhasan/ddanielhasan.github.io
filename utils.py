@@ -185,7 +185,6 @@ def load_job_data_to_db(file_path):
     :param file_path: Path to the input Excel file containing job data.
     :return: A pandas DataFrame with the processed job data.
     """
-
     # Load the Excel file
     data = pd.read_excel(file_path)
 
@@ -278,7 +277,6 @@ def load_job_data_to_db(file_path):
     #return data
 
 
-
     ######################################################
     def get_or_create_job_type(job_type_name):
         """
@@ -296,6 +294,12 @@ def load_job_data_to_db(file_path):
             except IntegrityError:
                 db.session.rollback()
                 return JobType.query.filter_by(type_name=job_type_name).first()
+
+    def get_location_id_for_company(company_title, company_url):
+        company = Company.query.filter_by(name=company_title, website=company_url).first()
+        if company and company.locations:
+            return company.locations[0].location_id
+        return None
 
     def get_company_id(company_title, company_url):
         """
@@ -339,6 +343,11 @@ def load_job_data_to_db(file_path):
                 if not company_id:
                     continue  # Skip this job if the company is not in the database
 
+                location_id = get_location_id_for_company(company_title, company_url)
+                if not location_id:
+                    logging.info(f"No location found for company: {company_title}. Skipping.")
+                    continue
+
                 # Check for duplicate job
                 duplicate_job = (
                     Job.query.join(Company, Job.company_id == Company.company_id)
@@ -363,7 +372,8 @@ def load_job_data_to_db(file_path):
                     company_id=company_id,
                     job_type_id=job_type.job_type_id if job_type else None,  # Link job_type_id
                     salary_min=minimum_salary,
-                    salary_max=max_salary
+                    salary_max=max_salary,
+                    location_id=location_id
                 )
                 db.session.add(job)
                 db.session.flush()  # Generate job_id

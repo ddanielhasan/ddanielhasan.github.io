@@ -10,7 +10,7 @@ from werkzeug.utils import secure_filename
 
 app = Flask(__name__, template_folder='templates')
 
-#neta, user management
+#Daniel, user management
 app.secret_key = "super secret key"
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -68,7 +68,7 @@ def index():
 def jobsearch():
     keywords = request.args.get('keywords', '')
     job_category = request.args.get('job_category', '')
-    # Query with outer joins to include jobs without location or category
+    # Query with outer joins
     jobs_query = (
         Job.query
         .join(Company)
@@ -80,6 +80,8 @@ def jobsearch():
             Job.title,
             Job.description,
             Job.company_id,
+            Job.salary_min,
+            Job.salary_max,
             Company.name.label('company_name'),
             Company.logo_url.label('company_logo'),
             Location.city.label('location_city'),
@@ -94,7 +96,6 @@ def jobsearch():
     if job_category:
         jobs_query = jobs_query.filter(JobCategory.category_name.ilike(job_category))
 
-    # Add other filters here as needed, similar to the keywords filter
     categories = JobCategory.query.all()
     jobs = jobs_query.all()
     return render_template('jobsearch.html', jobs=jobs, categories=categories, job_category=job_category)
@@ -105,9 +106,9 @@ def job_details(job_id):
     job = (
         Job.query
         .join(Company)
-        .join(Location, Job.location_id == Location.location_id)
-        .join(JobType, Job.job_type_id == JobType.job_type_id)
-        .join(JobCategory, Job.category_id == JobCategory.category_id)
+        .outerjoin(Location, Job.location_id == Location.location_id)
+        .outerjoin(JobType, Job.job_type_id == JobType.job_type_id)
+        .outerjoin(JobCategory, Job.category_id == JobCategory.category_id)
         .add_columns(
             Job.job_id,
             Job.title,
